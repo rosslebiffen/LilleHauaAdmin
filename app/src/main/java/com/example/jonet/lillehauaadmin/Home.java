@@ -335,6 +335,11 @@ public class Home extends AppCompatActivity
             Intent orders = new Intent(Home.this, OrderStatus.class);
             startActivity(orders);
         }
+        else if (id == R.id.nav_message)
+        {
+            Intent message = new Intent(Home.this, SendMessage.class);
+            startActivity(message);
+        }
 
 
 
