@@ -1,7 +1,8 @@
 package com.example.jonet.lillehauaadmin.Remote;
 
+import com.example.jonet.lillehauaadmin.Model.DataMessage;
 import com.example.jonet.lillehauaadmin.Model.MyResponse;
-import com.example.jonet.lillehauaadmin.Model.Sender;
+
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -21,7 +22,7 @@ public interface APIService {
 
     )
     @POST("fcm/send")
-    Call<MyResponse> sendNotification(@Body Sender body);
+    Call<MyResponse> sendNotification(@Body DataMessage body);
 
 
 }

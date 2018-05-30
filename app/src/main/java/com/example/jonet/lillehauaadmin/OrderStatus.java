@@ -15,10 +15,10 @@ import android.widget.Toast;
 
 import com.example.jonet.lillehauaadmin.Common.Common;
 import com.example.jonet.lillehauaadmin.Interface.ItemClickListener;
+import com.example.jonet.lillehauaadmin.Model.DataMessage;
 import com.example.jonet.lillehauaadmin.Model.MyResponse;
-import com.example.jonet.lillehauaadmin.Model.Notification;
+
 import com.example.jonet.lillehauaadmin.Model.Request;
-import com.example.jonet.lillehauaadmin.Model.Sender;
 import com.example.jonet.lillehauaadmin.Model.Token;
 import com.example.jonet.lillehauaadmin.Remote.APIService;
 import com.example.jonet.lillehauaadmin.ViewHolder.OrderViewHolder;
@@ -29,6 +29,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.jaredrummler.materialspinner.MaterialSpinner;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -77,25 +80,43 @@ public class OrderStatus extends AppCompatActivity {
                 requests
         ) {
             @Override
-            protected void populateViewHolder(OrderViewHolder viewHolder, final Request model, int position) {
+            protected void populateViewHolder(OrderViewHolder viewHolder, final Request model, final int position) {
                 viewHolder.txtOrderId.setText(adapter.getRef(position).getKey());
                 viewHolder.txtOrderStatus.setText(Common.convertCodeToStatus(model.getStatus()));
                 //viewHolder.txtOrderAddress.setText(model.getAddress());
                 viewHolder.txtOrderPhone.setText(model.getPhone());
 
-                viewHolder.setItemClickListener(new ItemClickListener() {
+                //New event button
+                viewHolder.btnEdit.setOnClickListener(new View.OnClickListener() {
                     @Override
-                    public void onClick(View view, int position, boolean isLongClick) {
+                    public void onClick(View view) {
+                        showUpdateDialog(adapter.getRef(position).getKey(),
+                                adapter.getItem(position));
+                    }
+                });
+                //new delete button
+                viewHolder.btnRemove.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        deleteOrder(adapter.getRef(position).getKey());
+                        showDeleteDialog(adapter.getRef(position).getKey(),
+                                adapter.getItem(position));
+                    }
+                });
+
+                //new details button
+                viewHolder.btnDetail.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
                         Intent orderDetail = new Intent(OrderStatus.this,OrderDetail.class);
                         Common.currentRequest = model;
                         orderDetail.putExtra("OrderId",adapter.getRef(position).getKey());
                         startActivity(orderDetail);
-
-
-
-
                     }
                 });
+
+
+
 
             }
         };
@@ -103,18 +124,11 @@ public class OrderStatus extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
     }
 
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        if(item.getTitle().equals(Common.UPDATE))
-            showUpdateDialog(adapter.getRef(item.getOrder()).getKey(),adapter.getItem(item.getOrder()));
-        else if(item.getTitle().equals(Common.DELETE))
-            deleteOrder(adapter.getRef(item.getOrder()).getKey());
 
-        return super.onContextItemSelected(item);
-    }
 
     private void deleteOrder(String key) {
-        requests.child(key).removeValue();
+
+
     }
 
     private void showUpdateDialog(String key, final Request item) {
@@ -140,7 +154,39 @@ public class OrderStatus extends AppCompatActivity {
 
 
                 requests.child(localKey).setValue(item);
+                adapter.notifyDataSetChanged(); //Add to update item size
                 sendOrderStatusToUser(localKey,item);
+            }
+        });
+        alertDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        alertDialog.show();
+
+    }
+    private void showDeleteDialog(String key, final Request item) {
+        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(OrderStatus.this);
+        alertDialog.setTitle("Are you sure you want to delete this order?");
+        alertDialog.setMessage("");
+
+        LayoutInflater inflater = this.getLayoutInflater();
+        final View view = inflater.inflate(R.layout.update_order_layout,null);
+
+
+        alertDialog.setView(view);
+
+        final String localKey = key;
+        alertDialog.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+                requests.child(localKey).removeValue();
+                adapter.notifyDataSetChanged();
+
+
             }
         });
         alertDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
@@ -164,10 +210,15 @@ public class OrderStatus extends AppCompatActivity {
                             Token token = postSnapshot.getValue(Token.class);
 
                             //Make Raw Payload
-                            Notification notification = new Notification("Lille Haua","Your order "+key+" was updated");
-                            Sender content = new Sender(token.getToken(),notification);
+                            // Notification notification = new Notification("Lille Haua","Your order "+key+" was updated");
+                            //Sender content = new Sender(token.getToken(),notification);
+                            Map<String,String>dataSend = new HashMap<>();
+                            dataSend.put("title", "Lille Haua");
+                            dataSend.put("message", "Your order "+key+" was updated");
+                            DataMessage dataMessage = new DataMessage(token.getToken(),dataSend);
 
-                            mService.sendNotification(content)
+
+                            mService.sendNotification(dataMessage)
                                     .enqueue(new Callback<MyResponse>() {
                                         @Override
                                         public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {

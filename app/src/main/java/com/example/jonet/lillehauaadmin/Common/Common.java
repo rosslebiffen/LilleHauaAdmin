@@ -3,6 +3,7 @@ package com.example.jonet.lillehauaadmin.Common;
 import com.example.jonet.lillehauaadmin.Model.Request;
 import com.example.jonet.lillehauaadmin.Model.User;
 import com.example.jonet.lillehauaadmin.Remote.APIService;
+import com.example.jonet.lillehauaadmin.Remote.FCMRetrofitClient;
 import com.example.jonet.lillehauaadmin.Remote.RetrofitClient;
 
 /**
@@ -12,6 +13,7 @@ import com.example.jonet.lillehauaadmin.Remote.RetrofitClient;
 public class Common {
 
     public static String topicName = "News";
+    public static String PHONE_TEXT = "userPhone";
 
    public static final String BASE_URL = "https://fcm.googleapis.com/";
    public static final String fcmUrl = "https://fcm.googleapis.com/";
@@ -21,7 +23,7 @@ public class Common {
     }
     public static APIService getFCMClient()
     {
-        return RetrofitClient.getClient(fcmUrl).create(APIService.class);
+        return FCMRetrofitClient.getClient(fcmUrl).create(APIService.class);
     }
 
     public static User currentUser;
